@@ -18,16 +18,16 @@ class ListingService {
     }
 
     static async findAll({ category, limit = 20, offset = 0, sort = 'newest' }) {
-        let orderBy = 'created_at DESC';
-        if (sort === 'price_asc') orderBy = 'price ASC';
-        if (sort === 'price_desc') orderBy = 'price DESC';
+        let orderBy = 'l.created_at DESC';
+        if (sort === 'price_asc') orderBy = 'l.price ASC';
+        if (sort === 'price_desc') orderBy = 'l.price DESC';
 
-        let whereClause = "status = 'active'";
+        let whereClause = "l.status = 'active'";
         const params = [limit, offset];
 
         if (category) {
             params.push(category);
-            whereClause += ` AND category = $${params.length}`;
+            whereClause += ` AND l.category = $${params.length}`;
         }
 
         return queryAll(
