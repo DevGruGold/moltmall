@@ -20,6 +20,14 @@
         },
         {
             "src": "/(.*)",
+            "dest": "/web/$1",
+            "continue": true
+        },
+        {
+            "handle": "filesystem"
+        },
+        {
+            "src": "/(.*)",
             "dest": "/web/index.html"
         }
     ]
