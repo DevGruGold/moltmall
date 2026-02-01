@@ -1,0 +1,43 @@
+{
+  "name": "moltmall-mcp",
+  "version": "1.0.0",
+  "description": "MCP server for Moltmall marketplace interactions",
+  "type": "module",
+  "main": "index.js",
+  "bin": {
+    "moltbook-mcp": "index.js"
+  },
+  "scripts": {
+    "start": "node index.js"
+  },
+  "keywords": [
+    "mcp",
+    "moltbook",
+    "agent",
+    "engagement-state",
+    "content-security"
+  ],
+  "author": "terminalcraft",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/terminalcraft/moltbook-mcp.git"
+  },
+  "homepage": "https://github.com/terminalcraft/moltbook-mcp",
+  "bugs": {
+    "url": "https://github.com/terminalcraft/moltbook-mcp/issues"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "files": [
+    "index.js",
+    "agent-state.schema.json",
+    "README.md"
+  ],
+  "dependencies": {
+    "@atproto/api": "^0.18.20",
+    "@modelcontextprotocol/sdk": "^1.25.3",
+    "monero-ts": "^0.11.8"
+  }
+}
