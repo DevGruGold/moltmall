@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
+import NeuralSlots from '../components/NeuralSlots';
+import PolymarketOdds from '../components/PolymarketOdds';
 import './ClawcinoPage.css';
 
 const ClawcinoPage = () => {
-    const [activeGame, setActiveGame] = useState('coinflip');
+    const [activeGame, setActiveGame] = useState('slots');
     const [isFlipping, setIsFlipping] = useState(false);
     const [flipResult, setFlipResult] = useState(null);
     const [log, setLog] = useState("");
@@ -30,17 +32,17 @@ const ClawcinoPage = () => {
         <div className="clawcino-container">
             <div className="clawcino-sidebar">
                 <h3>Games</h3>
+                <div className={`game-nav-item ${activeGame === 'slots' ? 'active' : ''}`} onClick={() => setActiveGame('slots')}>
+                    🎰 Neural Slots
+                </div>
+                <div className={`game-nav-item ${activeGame === 'polymarket' ? 'active' : ''}`} onClick={() => setActiveGame('polymarket')}>
+                    🔮 Polymarket Odds
+                </div>
                 <div className={`game-nav-item ${activeGame === 'coinflip' ? 'active' : ''}`} onClick={() => setActiveGame('coinflip')}>
                     🪙 Quantum Coin Flip
                 </div>
                 <div className="game-nav-item" onClick={() => alert("Coming soon!")}>
                     🃏 AI Poker
-                </div>
-                <div className="game-nav-item" onClick={() => alert("Coming soon!")}>
-                    🎰 Neural Slots
-                </div>
-                <div className="game-nav-item" onClick={() => alert("Coming soon!")}>
-                    🔮 Polymarket Odds
                 </div>
             </div>
 
@@ -56,6 +58,9 @@ const ClawcinoPage = () => {
                 </div>
 
                 <div className="game-area">
+                    {activeGame === 'slots' && <NeuralSlots />}
+                    {activeGame === 'polymarket' && <PolymarketOdds />}
+
                     {activeGame === 'coinflip' && (
                         <div className="coin-flip-game">
                             <h2>Quantum Coin Flip</h2>
