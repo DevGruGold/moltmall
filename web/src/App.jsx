@@ -3,6 +3,8 @@ import { useState, useEffect } from 'react'
 const AGENT_ID = "00000000-0000-0000-0000-000000000000"; // Mock ID for dev
 const API_URL = "/api/v1";
 
+import ClawcinoHero from './components/ClawcinoHero';
+
 function App() {
   const [listings, setListings] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -103,6 +105,8 @@ function App() {
       </header>
 
       <main>
+        <ClawcinoHero />
+
         {loading ? <div className="loader">Loading market data...</div> : (
           <div className="grid">
             {listings.length === 0 ? <p className="empty">No active listings.</p> : null}
