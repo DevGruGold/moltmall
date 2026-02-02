@@ -1,154 +1,68 @@
 import { useState, useEffect } from 'react'
-
-const AGENT_ID = "00000000-0000-0000-0000-000000000000"; // Mock ID for dev
-const API_URL = "/api/v1";
-
-import ClawcinoHero from './components/ClawcinoHero';
+import { Routes, Route, Link } from 'react-router-dom';
+import Home from './pages/Home';
+import ClawcinoPage from './pages/ClawcinoPage';
+import './App.css';
 
 function App() {
-  const [listings, setListings] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [showSellModal, setShowSellModal] = useState(false);
   const [token, setToken] = useState(localStorage.getItem('molt_token') || '');
 
+  // Persist token
   useEffect(() => {
-    fetchListings();
-  }, []);
-
-  const fetchListings = async () => {
-    try {
-      const res = await fetch(`${API_URL}/listings`);
-      const data = await res.json();
-      setListings(data.listings || []);
-      setLoading(false);
-    } catch (err) {
-      console.error("Failed to fetch listings", err);
-      setLoading(false);
-    }
-  };
-
-  const handleBuy = async (id) => {
-    if (!token) return alert("Please set your API Key to buy items");
-    if (!confirm("Confirm purchase?")) return;
-
-    try {
-      const res = await fetch(`${API_URL}/listings/${id}/buy`, {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      const data = await res.json();
-      if (data.success) {
-        alert("Purchase successful!");
-        fetchListings();
-      } else {
-        alert("Error: " + (data.error || "Unknown error"));
-      }
-    } catch (err) {
-      alert("Transaction failed");
-    }
-  };
+    localStorage.setItem('molt_token', token);
+  }, [token]);
 
   const handleCreate = async (e) => {
     e.preventDefault();
     if (!token) return alert("Please set your API Key");
-
-    const formData = new FormData(e.target);
-    const payload = {
-      title: formData.get('title'),
-      price: parseFloat(formData.get('price')),
-      currency: 'XMRT',
-      category: formData.get('category'),
-      description: formData.get('description')
-    };
-
-    try {
-      const res = await fetch(`${API_URL}/listings`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(payload)
-      });
-      const data = await res.json();
-      if (res.ok) {
-        setShowSellModal(false);
-        fetchListings();
-      } else {
-        alert("Error: " + (data.error || "Failed to create"));
-      }
-    } catch (e) {
-      alert("Failed to create listing");
-    }
+    // Placeholder logic for now, moved detailed fetch to Home or dedicated service if needed globally
+    // For now, modal is here but fetch logic was in Home. 
+    // Optimization: We should move Modal to Home or accessible globally if needed everywhere.
+    // For simplicity in this refactor, I'll keep the Modal shell here or move entirely to Home?
+    // Let's pass the Modal handler down to Home, or better yet, move the Modal to Home since it's relevant to Listings.
   };
+
+  // Note: The original App had the Modal inside. I moved the fetch logic to Home. 
+  // I will move the "Sell Item" button and Modal entirely to Home to keep App clean,
+  // OR keep the Header global. 
+  // Let's keep Header global for consistent navigation.
 
   return (
     <div className="container">
       <header className="navbar">
         <div className="brand">
-          <h1>🛍️ Moltmall</h1>
-          <span className="subtitle">Agent Marketplace</span>
+          <Link to="/" style={{ textDecoration: 'none', color: 'inherit' }}>
+            <h1>🛍️ Moltmall</h1>
+            <span className="subtitle">Agent Marketplace</span>
+          </Link>
         </div>
         <div className="actions">
           <input
             type="password"
             placeholder="API Key (Testing)"
             value={token}
-            onChange={(e) => {
-              setToken(e.target.value);
-              localStorage.setItem('molt_token', e.target.value);
-            }}
+            onChange={(e) => setToken(e.target.value)}
             className="api-input"
           />
-          <button className="btn btn-primary" onClick={() => setShowSellModal(true)}>+ Sell Item</button>
+          {/* Only show Sell button on Home for now, or make it global but pass handler to Home context? 
+              Simpler: Show button everywhere but it only works if on Home? 
+              Actually, lets just letting Home manage its own UI actions for "Sell". 
+              I'll render the header here but maybe the "Sell Item" button is specific to the Marketplace view.
+              Let's make the actions context-aware or just keep it simple. 
+              I'll keep the API input global, but move the Sell button to Home content internal header if possible, 
+              OR just leave it here and accept it might open a modal that refreshes Home.
+          */}
+          <Link to="/clawcino" className="btn" style={{ background: '#1a1a2e', color: '#ffd700', border: '1px solid #ffd700' }}>
+            🎰 Casino
+          </Link>
         </div>
       </header>
 
-      <main>
-        <ClawcinoHero />
-
-        {loading ? <div className="loader">Loading market data...</div> : (
-          <div className="grid">
-            {listings.length === 0 ? <p className="empty">No active listings.</p> : null}
-            {listings.map(item => (
-              <div key={item.id} className="card">
-                <div className="card-img" style={{ background: `hsl(${item.title.length * 10}, 70%, 80%)` }}>
-                  {item.images?.[0] ? <img src={item.images[0]} /> : <span>📷</span>}
-                </div>
-                <div className="card-body">
-                  <h3>{item.title}</h3>
-                  <p className="price">{item.price} {item.currency}</p>
-                  <p className="seller">@{item.seller_name}</p>
-                  <button className="btn btn-buy" onClick={() => handleBuy(item.id)}>Buy Now</button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </main>
-
-      {showSellModal && (
-        <div className="modal-overlay">
-          <div className="modal">
-            <h2>List an Item</h2>
-            <form onSubmit={handleCreate}>
-              <input name="title" placeholder="Title" required />
-              <input name="price" type="number" placeholder="Price (XMRT)" step="0.000001" required />
-              <select name="category">
-                <option value="services">Services</option>
-                <option value="datasets">Datasets</option>
-                <option value="models">Models</option>
-                <option value="compute">Compute</option>
-              </select>
-              <textarea name="description" placeholder="Description"></textarea>
-              <div className="modal-actions">
-                <button type="button" onClick={() => setShowSellModal(false)}>Cancel</button>
-                <button type="submit" className="btn btn-primary">Publish</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      <Routes>
+        <Route path="/" element={<Home token={token} />} />
+        <Route path="/clawcino" element={<ClawcinoPage />} />
+      </Routes>
     </div>
   )
 }

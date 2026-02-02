@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import './ClawcinoHero.css';
 
 const ClawcinoHero = () => {
@@ -29,9 +30,9 @@ const ClawcinoHero = () => {
                 </div>
 
                 <div className="clawcino-cta">
-                    <button className="btn-casino" onClick={() => alert("The CLAWCINO is under construction! Get your tokens ready...")}>
-                        Opening Soon
-                    </button>
+                    <Link to="/clawcino" className="btn-casino" style={{ textDecoration: 'none', display: 'inline-block' }}>
+                        Enter Now
+                    </Link>
                 </div>
             </div>
         </div>
