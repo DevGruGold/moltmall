@@ -1,22 +1,23 @@
 #root {
   max-width: 1280px;
   margin: 0 auto;
-  padding: 1rem;
-  /* Reduced from 2rem for mobile */
+  padding: 0.5rem;
+  /* Tighter padding for mobile */
   text-align: center;
+  box-sizing: border-box;
+  /* Ensure padding doesn't add to width */
 }
 
 /* Mobile Friendly Navbar */
 .navbar {
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
+  /* Stack by default on mobile */
   align-items: center;
-  padding: 1rem 0;
-  margin-bottom: 1rem;
+  gap: 15px;
+  padding: 10px 0;
+  margin-bottom: 20px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  flex-wrap: wrap;
-  /* Allow wrapping on very small screens */
-  gap: 10px;
 }
 
 .brand a {
@@ -28,7 +29,7 @@
 }
 
 .brand h1 {
-  font-size: 1.5rem;
+  font-size: 1.8rem;
   margin: 0;
 }
 
@@ -36,44 +37,28 @@
   font-size: 0.8rem;
   color: #888;
   display: none;
-  /* Hide subtitle on mobile to save space */
-}
-
-@media (min-width: 768px) {
-  #root {
-    padding: 2rem;
-  }
-
-  .subtitle {
-    display: inline;
-  }
 }
 
 .actions {
   display: flex;
   gap: 10px;
   align-items: center;
+  flex-wrap: wrap;
+  justify-content: center;
 }
 
 .api-input {
   background: #1a1a1a;
   border: 1px solid #333;
-  padding: 8px 12px;
+  padding: 10px;
   border-radius: 4px;
   color: white;
-  width: 120px;
-  /* Smaller default width */
-  transition: width 0.3s;
-}
-
-.api-input:focus {
-  width: 200px;
-  border-color: #ffd700;
-  outline: none;
+  width: 100%;
+  max-width: 200px;
 }
 
 .btn {
-  padding: 8px 16px;
+  padding: 10px 20px;
   border-radius: 4px;
   cursor: pointer;
   text-decoration: none;
@@ -89,8 +74,20 @@
   border: 1px solid #ffd700;
 }
 
-.btn-primary:hover {
-  background: #e6c200;
+/* Desktop Shifts */
+@media (min-width: 768px) {
+  #root {
+    padding: 2rem;
+  }
+
+  .navbar {
+    flex-direction: row;
+    justify-content: space-between;
+  }
+
+  .subtitle {
+    display: inline;
+  }
 }
 
 /* Utilities */

@@ -1,19 +1,23 @@
 /* Shared Game Styles */
 .game-container {
-    background: rgba(0, 0, 0, 0.2);
-    border-radius: 20px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    padding: 20px;
+    padding: 0;
+    /* No padding on mobile */
     text-align: center;
     width: 100%;
     max-width: 600px;
     margin: 0 auto;
     box-sizing: border-box;
+    /* Transparent on mobile */
+    background: transparent;
+    border: none;
 }
 
 @media (min-width: 768px) {
     .game-container {
         padding: 30px;
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
     }
 }
 
@@ -41,23 +45,36 @@
 /* Neural Slots */
 .slots-machine {
     background: #1a1a2e;
-    padding: 15px;
-    border-radius: 15px;
-    border: 4px solid #333;
-    box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+    padding: 10px;
+    /* Reduced */
+    border-radius: 12px;
+    border: 2px solid #333;
+    /* Thinner border mobile */
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
     margin-bottom: 20px;
     width: 100%;
     box-sizing: border-box;
 }
 
+@media (min-width: 768px) {
+    .slots-machine {
+        padding: 20px;
+        border-radius: 15px;
+        border: 4px solid #333;
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+    }
+}
+
 .reels-container {
     display: flex;
-    gap: 8px;
+    gap: 4px;
+    /* Tighter gap */
     justify-content: center;
     background: #000;
-    padding: 10px;
-    border-radius: 10px;
-    margin-bottom: 20px;
+    padding: 8px;
+    /* Tighter padding */
+    border-radius: 8px;
+    margin-bottom: 15px;
     border: 1px solid #444;
     box-shadow: inset 0 0 20px black;
 }
@@ -70,7 +87,7 @@
     /* Maintain shape */
     height: auto;
     background: #1e1e1e;
-    border-radius: 8px;
+    border-radius: 6px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -78,7 +95,7 @@
     /* Initial mobile size */
     position: relative;
     overflow: hidden;
-    border: 2px solid #555;
+    border: 1px solid #555;
     color: white;
 }
 
@@ -86,6 +103,8 @@
     .reel {
         font-size: 3.5rem;
         height: 120px;
+        border-width: 2px;
+        border-radius: 8px;
     }
 
     .reels-container {
@@ -197,12 +216,17 @@
 
 .win-display {
     margin-top: 20px;
-    font-size: 1.2rem;
-    /* Smaller for mobile */
+    font-size: 1.1rem;
     font-weight: bold;
     color: #ffd700;
     text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
     min-height: 2rem;
+}
+
+@media (min-width: 768px) {
+    .win-display {
+        font-size: 1.5rem;
+    }
 }
 
 /* Polymarket */
@@ -248,7 +272,7 @@
 
 .vote-btn {
     flex: 1;
-    padding: 8px;
+    padding: 10px;
     border: none;
     border-radius: 6px;
     font-weight: bold;
@@ -310,7 +334,6 @@
     justify-content: center;
     margin-bottom: 20px;
     touch-action: none;
-    /* Prevent zooming/scrolling issues if treating as game canvas */
 }
 
 @media (min-width: 600px) {
