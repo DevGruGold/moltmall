@@ -35,47 +35,87 @@
 
 .reels-container {
     display: flex;
-    gap: 10px;
+    gap: 15px;
+    /* Increased gap */
     justify-content: center;
     background: #000;
-    padding: 10px;
+    padding: 20px;
     border-radius: 10px;
     margin-bottom: 20px;
     border: 1px solid #444;
+    /* Inner shadow for depth */
+    box-shadow: inset 0 0 20px black;
 }
 
 .reel {
-    width: 80px;
-    height: 100px;
-    background: white;
+    width: 90px;
+    height: 120px;
+    background: #1e1e1e;
+    /* Darker reel background for contrast */
     border-radius: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 3rem;
+    font-size: 3.5rem;
     position: relative;
     overflow: hidden;
-    box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.5);
+    border: 2px solid #555;
+    color: white;
 }
 
-.reel.spinning::after {
-    content: '';
+/* Spin Animation Logic */
+.reel.spinning {
+    color: transparent;
+    /* Hide static symbol */
+}
+
+.reel.spinning::before {
+    content: '🤖 🧠 🚀 💎 7️⃣ 🍒 🤖 🧠';
+    /* Symbol strip simulated */
     position: absolute;
     top: 0;
     left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(transparent, rgba(255, 255, 255, 0.8), transparent);
-    animation: reelSpin 0.1s linear infinite;
+    width: 100%;
+    font-size: 3rem;
+    line-height: 100px;
+    display: flex;
+    flex-direction: column;
+    animation: reelSpinBlur 0.3s linear infinite;
+    /* Faster spin */
+    color: rgba(255, 255, 255, 0.5);
+    /* Ghosting effect */
+    filter: blur(2px);
+    /* Motion blur */
 }
 
-@keyframes reelSpin {
+@keyframes reelSpinBlur {
     0% {
-        transform: translateY(-100%);
+        transform: translateY(-20%);
     }
 
     100% {
-        transform: translateY(100%);
+        transform: translateY(-80%);
+    }
+
+    /* Slide the strip */
+}
+
+/* Highlight winner */
+.reel.winner {
+    border-color: #ffd700;
+    box-shadow: 0 0 15px #ffd700;
+    animation: pulseWinner 1s infinite alternate;
+}
+
+@keyframes pulseWinner {
+    0% {
+        transform: scale(1);
+        box-shadow: 0 0 10px #ffd700;
+    }
+
+    100% {
+        transform: scale(1.05);
+        box-shadow: 0 0 25px #ffd700;
     }
 }
 
