@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import NeuralSlots from '../components/NeuralSlots';
 import PolymarketOdds from '../components/PolymarketOdds';
+import AIPoker from '../components/AIPoker';
 import './ClawcinoPage.css';
 
 const ClawcinoPage = () => {
-    const [activeGame, setActiveGame] = useState('slots');
+    const [activeGame, setActiveGame] = useState('poker');
     const [isFlipping, setIsFlipping] = useState(false);
     const [flipResult, setFlipResult] = useState(null);
     const [log, setLog] = useState("");
@@ -32,6 +33,9 @@ const ClawcinoPage = () => {
         <div className="clawcino-container">
             <div className="clawcino-sidebar">
                 <h3>Games</h3>
+                <div className={`game-nav-item ${activeGame === 'poker' ? 'active' : ''}`} onClick={() => setActiveGame('poker')}>
+                    🃏 AI Poker
+                </div>
                 <div className={`game-nav-item ${activeGame === 'slots' ? 'active' : ''}`} onClick={() => setActiveGame('slots')}>
                     🎰 Neural Slots
                 </div>
@@ -40,9 +44,6 @@ const ClawcinoPage = () => {
                 </div>
                 <div className={`game-nav-item ${activeGame === 'coinflip' ? 'active' : ''}`} onClick={() => setActiveGame('coinflip')}>
                     🪙 Quantum Coin Flip
-                </div>
-                <div className="game-nav-item" onClick={() => alert("Coming soon!")}>
-                    🃏 AI Poker
                 </div>
             </div>
 
@@ -58,6 +59,7 @@ const ClawcinoPage = () => {
                 </div>
 
                 <div className="game-area">
+                    {activeGame === 'poker' && <AIPoker />}
                     {activeGame === 'slots' && <NeuralSlots />}
                     {activeGame === 'polymarket' && <PolymarketOdds />}
 

@@ -236,3 +236,168 @@
     border-radius: 4px;
     font-size: 0.8em;
 }
+
+/* Poker Table */
+.poker-container {
+    max-width: 800px;
+}
+
+.poker-table {
+    position: relative;
+    background: radial-gradient(circle, #2a402a 0%, #1e281e 80%);
+    border-radius: 100px;
+    width: 100%;
+    aspect-ratio: 16/9;
+    border: 15px solid #3d2b1f;
+    /* Wood rim */
+    box-shadow: inset 0 0 50px rgba(0, 0, 0, 0.8), 0 20px 40px rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+.board-area {
+    display: flex;
+    gap: 8px;
+    height: 90px;
+    align-items: center;
+    background: rgba(0, 0, 0, 0.2);
+    padding: 10px 20px;
+    border-radius: 50px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.card {
+    width: 50px;
+    height: 70px;
+    background: white;
+    border-radius: 4px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    font-family: 'Courier New', monospace;
+    font-weight: bold;
+    font-size: 1.2rem;
+    color: black;
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
+    position: relative;
+}
+
+.card.red {
+    color: #d00;
+}
+
+.card.back {
+    background: #e94560;
+    background-image: repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(255, 255, 255, 0.1) 5px, rgba(255, 255, 255, 0.1) 10px);
+    border: 2px solid white;
+}
+
+.card.back::after {
+    content: '';
+}
+
+/* Hide text */
+
+.opponent-seat {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.opponent-1 {
+    top: -20px;
+    left: 20%;
+}
+
+.opponent-2 {
+    top: -20px;
+    right: 20%;
+}
+
+.opponent-3 {
+    top: 40%;
+    left: -40px;
+}
+
+.player-seat {
+    position: absolute;
+    bottom: -30px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: #333;
+    border: 2px solid #555;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+    margin-bottom: 5px;
+    position: relative;
+}
+
+.avatar.active {
+    border-color: #ffd700;
+    box-shadow: 0 0 15px #ffd700;
+}
+
+.player-hand {
+    display: flex;
+    gap: 5px;
+    margin-top: -10px;
+    /* Overlap avatar slightly map */
+}
+
+.poker-controls {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+}
+
+.action-btn {
+    padding: 10px 25px;
+    border-radius: 30px;
+    border: none;
+    font-weight: bold;
+    cursor: pointer;
+    background: #333;
+    color: white;
+    transition: all 0.2s;
+    border-bottom: 3px solid #111;
+}
+
+.action-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    background: #444;
+}
+
+.action-btn.primary {
+    background: #ffd700;
+    color: black;
+    border-bottom-color: #b8860b;
+}
+
+.action-btn.fold {
+    background: #ef4444;
+    color: white;
+    border-bottom-color: #991b1b;
+}
+
+.game-log {
+    margin-top: 15px;
+    height: 20px;
+    font-size: 0.9rem;
+    color: #aaa;
+}
