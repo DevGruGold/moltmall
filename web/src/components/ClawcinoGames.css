@@ -3,14 +3,22 @@
     background: rgba(0, 0, 0, 0.2);
     border-radius: 20px;
     border: 1px solid rgba(255, 255, 255, 0.1);
-    padding: 30px;
+    padding: 20px;
     text-align: center;
+    width: 100%;
     max-width: 600px;
     margin: 0 auto;
+    box-sizing: border-box;
+}
+
+@media (min-width: 768px) {
+    .game-container {
+        padding: 30px;
+    }
 }
 
 .game-title {
-    font-size: 2rem;
+    font-size: 1.5rem;
     margin-bottom: 0.5rem;
     background: linear-gradient(to right, #ffd700, #e94560);
     -webkit-background-clip: text;
@@ -18,89 +26,116 @@
     color: transparent;
 }
 
+@media (min-width: 768px) {
+    .game-title {
+        font-size: 2rem;
+    }
+}
+
 .game-desc {
     color: #a0a0b0;
-    margin-bottom: 2rem;
+    margin-bottom: 1.5rem;
+    font-size: 0.9rem;
 }
 
 /* Neural Slots */
 .slots-machine {
     background: #1a1a2e;
-    padding: 20px;
+    padding: 15px;
     border-radius: 15px;
     border: 4px solid #333;
     box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
     margin-bottom: 20px;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .reels-container {
     display: flex;
-    gap: 15px;
-    /* Increased gap */
+    gap: 8px;
     justify-content: center;
     background: #000;
-    padding: 20px;
+    padding: 10px;
     border-radius: 10px;
     margin-bottom: 20px;
     border: 1px solid #444;
-    /* Inner shadow for depth */
     box-shadow: inset 0 0 20px black;
 }
 
 .reel {
-    width: 90px;
-    height: 120px;
+    flex: 1;
+    /* Fluid width */
+    max-width: 90px;
+    aspect-ratio: 3/4;
+    /* Maintain shape */
+    height: auto;
     background: #1e1e1e;
-    /* Darker reel background for contrast */
     border-radius: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 3.5rem;
+    font-size: 2rem;
+    /* Initial mobile size */
     position: relative;
     overflow: hidden;
     border: 2px solid #555;
     color: white;
 }
 
+@media (min-width: 480px) {
+    .reel {
+        font-size: 3.5rem;
+        height: 120px;
+    }
+
+    .reels-container {
+        gap: 15px;
+        padding: 20px;
+    }
+}
+
 /* Spin Animation Logic */
 .reel.spinning {
     color: transparent;
-    /* Hide static symbol */
 }
 
 .reel.spinning::before {
     content: '🤖 🧠 🚀 💎 7️⃣ 🍒 🤖 🧠';
-    /* Symbol strip simulated */
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
-    font-size: 3rem;
-    line-height: 100px;
+    font-size: 2rem;
+    line-height: normal;
+    /* Adjusted for fluid height */
+    height: 800%;
+    /* Make very tall */
     display: flex;
     flex-direction: column;
+    justify-content: space-around;
+    align-items: center;
     animation: reelSpinBlur 0.3s linear infinite;
-    /* Faster spin */
     color: rgba(255, 255, 255, 0.5);
-    /* Ghosting effect */
     filter: blur(2px);
-    /* Motion blur */
+}
+
+@media (min-width: 480px) {
+    .reel.spinning::before {
+        font-size: 3rem;
+        line-height: 100px;
+    }
 }
 
 @keyframes reelSpinBlur {
     0% {
-        transform: translateY(-20%);
+        transform: translateY(-10%);
     }
 
     100% {
-        transform: translateY(-80%);
+        transform: translateY(-70%);
     }
-
-    /* Slide the strip */
 }
 
-/* Highlight winner */
 .reel.winner {
     border-color: #ffd700;
     box-shadow: 0 0 15px #ffd700;
@@ -129,13 +164,22 @@
     border: none;
     border-bottom: 4px solid #8a1c2f;
     color: white;
-    font-size: 1.5rem;
+    font-size: 1.2rem;
     font-weight: bold;
-    padding: 15px 40px;
+    padding: 12px 30px;
     border-radius: 50px;
     cursor: pointer;
     box-shadow: 0 5px 15px rgba(233, 69, 96, 0.4);
     transition: all 0.1s;
+    width: 100%;
+    max-width: 200px;
+}
+
+@media (min-width: 768px) {
+    .spin-btn {
+        font-size: 1.5rem;
+        padding: 15px 40px;
+    }
 }
 
 .spin-btn:active {
@@ -153,7 +197,8 @@
 
 .win-display {
     margin-top: 20px;
-    font-size: 1.5rem;
+    font-size: 1.2rem;
+    /* Smaller for mobile */
     font-weight: bold;
     color: #ffd700;
     text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
@@ -182,14 +227,14 @@
 }
 
 .market-question {
-    font-size: 1.1rem;
+    font-size: 1rem;
     font-weight: bold;
     margin-bottom: 10px;
     color: white;
 }
 
 .market-meta {
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     color: #888;
     margin-bottom: 15px;
     display: flex;
@@ -203,7 +248,7 @@
 
 .vote-btn {
     flex: 1;
-    padding: 10px;
+    padding: 8px;
     border: none;
     border-radius: 6px;
     font-weight: bold;
@@ -212,6 +257,7 @@
     justify-content: space-between;
     align-items: center;
     transition: opacity 0.2s;
+    font-size: 0.9rem;
 }
 
 .vote-btn:hover {
@@ -220,69 +266,108 @@
 
 .vote-yes {
     background: #10b981;
-    /* Green */
     color: white;
 }
 
 .vote-no {
     background: #ef4444;
-    /* Red */
     color: white;
 }
 
 .percent {
     background: rgba(0, 0, 0, 0.2);
-    padding: 2px 6px;
+    padding: 2px 5px;
     border-radius: 4px;
     font-size: 0.8em;
 }
 
-/* Poker Table */
+/* Poker Table - Responsive Approach */
 .poker-container {
     max-width: 800px;
+    width: 100%;
+    /* Ensure container doesn't overflow horizontally */
+    overflow: hidden;
+}
+
+/* Wrapper to maintain aspect ratio and scale */
+.poker-table-scaler {
+    width: 100%;
+    position: relative;
+    /* This setup ensures the table scales down proportionally */
 }
 
 .poker-table {
     position: relative;
     background: radial-gradient(circle, #2a402a 0%, #1e281e 80%);
-    border-radius: 100px;
-    width: 100%;
+    border-radius: 50px;
+    /* Using aspect ratio to maintain shape */
     aspect-ratio: 16/9;
-    border: 15px solid #3d2b1f;
-    /* Wood rim */
-    box-shadow: inset 0 0 50px rgba(0, 0, 0, 0.8), 0 20px 40px rgba(0, 0, 0, 0.5);
+    width: 100%;
+    border: 8px solid #3d2b1f;
+    box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.8), 0 10px 20px rgba(0, 0, 0, 0.5);
     display: flex;
     align-items: center;
     justify-content: center;
     margin-bottom: 20px;
+    touch-action: none;
+    /* Prevent zooming/scrolling issues if treating as game canvas */
+}
+
+@media (min-width: 600px) {
+    .poker-table {
+        border-width: 15px;
+        border-radius: 100px;
+    }
 }
 
 .board-area {
     display: flex;
-    gap: 8px;
-    height: 90px;
+    gap: 3px;
+    height: 50px;
     align-items: center;
     background: rgba(0, 0, 0, 0.2);
-    padding: 10px 20px;
-    border-radius: 50px;
+    padding: 5px 10px;
+    border-radius: 25px;
     border: 1px solid rgba(255, 255, 255, 0.1);
+    transform: scale(0.8);
+    /* Scale down board for mobile */
+}
+
+@media (min-width: 600px) {
+    .board-area {
+        height: 90px;
+        gap: 8px;
+        padding: 10px 20px;
+        border-radius: 50px;
+        transform: scale(1);
+    }
 }
 
 .card {
-    width: 50px;
-    height: 70px;
+    width: 30px;
+    height: 42px;
     background: white;
-    border-radius: 4px;
+    border-radius: 3px;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
     font-family: 'Courier New', monospace;
     font-weight: bold;
-    font-size: 1.2rem;
+    font-size: 0.8rem;
     color: black;
-    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
+    box-shadow: 1px 1px 3px rgba(0, 0, 0, 0.3);
     position: relative;
+}
+
+@media (min-width: 600px) {
+    .card {
+        width: 50px;
+        height: 70px;
+        border-radius: 4px;
+        font-size: 1.2rem;
+        box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
+    }
 }
 
 .card.red {
@@ -292,60 +377,83 @@
 .card.back {
     background: #e94560;
     background-image: repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(255, 255, 255, 0.1) 5px, rgba(255, 255, 255, 0.1) 10px);
-    border: 2px solid white;
+    border: 1px solid white;
 }
 
 .card.back::after {
     content: '';
 }
 
-/* Hide text */
-
 .opponent-seat {
     position: absolute;
     display: flex;
     flex-direction: column;
     align-items: center;
+    transform: scale(0.8);
+    /* Scale avatars down */
+}
+
+@media (min-width: 600px) {
+    .opponent-seat {
+        transform: scale(1);
+    }
 }
 
 .opponent-1 {
-    top: -20px;
-    left: 20%;
+    top: -15%;
+    left: 10%;
 }
 
 .opponent-2 {
-    top: -20px;
-    right: 20%;
+    top: -15%;
+    right: 10%;
 }
 
 .opponent-3 {
-    top: 40%;
-    left: -40px;
+    top: 35%;
+    left: -6%;
 }
 
 .player-seat {
     position: absolute;
-    bottom: -30px;
+    bottom: -15%;
     left: 50%;
-    transform: translateX(-50%);
+    transform: translateX(-50%) scale(0.9);
     display: flex;
     flex-direction: column;
     align-items: center;
 }
 
+@media (min-width: 600px) {
+    .player-seat {
+        bottom: -30px;
+        transform: translateX(-50%) scale(1);
+    }
+}
+
 .avatar {
-    width: 50px;
-    height: 50px;
+    width: 40px;
+    height: 40px;
     border-radius: 50%;
     background: #333;
     border: 2px solid #555;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.5rem;
+    font-size: 1.2rem;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
-    margin-bottom: 5px;
+    margin-bottom: 2px;
     position: relative;
+    z-index: 10;
+}
+
+@media (min-width: 600px) {
+    .avatar {
+        width: 50px;
+        height: 50px;
+        font-size: 1.5rem;
+        margin-bottom: 5px;
+    }
 }
 
 .avatar.active {
@@ -355,19 +463,20 @@
 
 .player-hand {
     display: flex;
-    gap: 5px;
-    margin-top: -10px;
-    /* Overlap avatar slightly map */
+    gap: 3px;
+    margin-top: -5px;
+    z-index: 5;
 }
 
 .poker-controls {
     display: flex;
-    gap: 15px;
+    gap: 8px;
     justify-content: center;
+    flex-wrap: wrap;
 }
 
 .action-btn {
-    padding: 10px 25px;
+    padding: 8px 16px;
     border-radius: 30px;
     border: none;
     font-weight: bold;
@@ -376,6 +485,16 @@
     color: white;
     transition: all 0.2s;
     border-bottom: 3px solid #111;
+    font-size: 0.9rem;
+    min-width: 80px;
+}
+
+@media (min-width: 600px) {
+    .action-btn {
+        padding: 10px 25px;
+        font-size: 1rem;
+        min-width: auto;
+    }
 }
 
 .action-btn:hover:not(:disabled) {
@@ -398,6 +517,6 @@
 .game-log {
     margin-top: 15px;
     height: 20px;
-    font-size: 0.9rem;
+    font-size: 0.8rem;
     color: #aaa;
 }
