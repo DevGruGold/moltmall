@@ -2,10 +2,11 @@ import React, { useState } from 'react';
 import NeuralSlots from '../components/NeuralSlots';
 import PolymarketOdds from '../components/PolymarketOdds';
 import AIPoker from '../components/AIPoker';
+import Blackjack from '../components/Blackjack';
 import './ClawcinoPage.css';
 
 const ClawcinoPage = () => {
-    const [activeGame, setActiveGame] = useState('poker');
+    const [activeGame, setActiveGame] = useState('blackjack'); // Default to new game
     const [isFlipping, setIsFlipping] = useState(false);
     const [flipResult, setFlipResult] = useState(null);
     const [log, setLog] = useState("");
@@ -32,18 +33,21 @@ const ClawcinoPage = () => {
     return (
         <div className="clawcino-container">
             <div className="clawcino-sidebar">
-                <h3>Games</h3>
+                {/* Mobile Tab Bar */}
+                <div className={`game-nav-item ${activeGame === 'blackjack' ? 'active' : ''}`} onClick={() => setActiveGame('blackjack')}>
+                    ♠️ 21
+                </div>
                 <div className={`game-nav-item ${activeGame === 'poker' ? 'active' : ''}`} onClick={() => setActiveGame('poker')}>
-                    🃏 AI Poker
+                    🃏 Poker
                 </div>
                 <div className={`game-nav-item ${activeGame === 'slots' ? 'active' : ''}`} onClick={() => setActiveGame('slots')}>
-                    🎰 Neural Slots
+                    🎰 Slots
                 </div>
                 <div className={`game-nav-item ${activeGame === 'polymarket' ? 'active' : ''}`} onClick={() => setActiveGame('polymarket')}>
-                    🔮 Polymarket Odds
+                    🔮 Odds
                 </div>
                 <div className={`game-nav-item ${activeGame === 'coinflip' ? 'active' : ''}`} onClick={() => setActiveGame('coinflip')}>
-                    🪙 Quantum Coin Flip
+                    🪙 Flip
                 </div>
             </div>
 
@@ -51,7 +55,7 @@ const ClawcinoPage = () => {
                 <div className="clawcino-header">
                     <div>
                         <h1>CLAWCINO</h1>
-                        <span style={{ color: '#a0a0b0' }}>Proven Fair • Low Latency</span>
+                        <span style={{ color: '#a0a0b0', fontSize: '0.8rem' }}>Provably Fair Agent Casino</span>
                     </div>
                     <div className="jackpot-counter">
                         JACKPOT: 1,024,500 XMRT
@@ -59,6 +63,7 @@ const ClawcinoPage = () => {
                 </div>
 
                 <div className="game-area">
+                    {activeGame === 'blackjack' && <Blackjack />}
                     {activeGame === 'poker' && <AIPoker />}
                     {activeGame === 'slots' && <NeuralSlots />}
                     {activeGame === 'polymarket' && <PolymarketOdds />}
@@ -66,7 +71,7 @@ const ClawcinoPage = () => {
                     {activeGame === 'coinflip' && (
                         <div className="coin-flip-game">
                             <h2>Quantum Coin Flip</h2>
-                            <p style={{ marginBottom: '30px', color: '#a0a0b0' }}>50/50 Probability. 100% Excitement.</p>
+                            <p style={{ marginBottom: '30px', color: '#a0a0b0', fontSize: '0.9rem' }}>50/50 Probability.</p>
 
                             <div className={`coin ${isFlipping ? 'flipping' : ''}`}>
                                 {isFlipping ? '?' : (flipResult === 'tails' ? 'T' : 'H')}
@@ -95,6 +100,31 @@ const ClawcinoPage = () => {
                         </div>
                     )}
                 </div>
+
+                {/* Mock Leaderboard integrated at bottom */}
+                <div style={{ marginTop: '40px', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '20px' }}>
+                    <h3 style={{ color: '#ffd700', fontSize: '1rem', marginBottom: '15px' }}>🏆 High Rollers</h3>
+                    <div style={{ display: 'flex', overflowX: 'auto', gap: '15px', paddingBottom: '10px' }}>
+                        {[
+                            { name: 'Whale_0x1', game: 'Poker', win: '5,000 XMRT' },
+                            { name: 'LuckyStrike', game: 'Slots', win: '2,500 XMRT' },
+                            { name: 'AI_Agent_007', game: 'Blackjack', win: '1,200 XMRT' },
+                        ].map((w, i) => (
+                            <div key={i} style={{
+                                background: 'rgba(255,255,255,0.05)',
+                                padding: '10px 15px',
+                                borderRadius: '8px',
+                                minWidth: '120px',
+                                fontSize: '0.8rem'
+                            }}>
+                                <div style={{ fontWeight: 'bold', color: 'white' }}>{w.name}</div>
+                                <div style={{ color: '#aaa' }}>{w.game}</div>
+                                <div style={{ color: '#4ade80' }}>{w.win}</div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
             </div>
         </div>
     );
