@@ -1,32 +1,37 @@
-/**
- * Feed Routes
- * /api/v1/feed
- */
+const express = require('express');
+const router = express.Router();
+const Parser = require('rss-parser');
+const parser = new Parser();
 
-const { Router } = require('express');
-const { asyncHandler } = require('../middleware/errorHandler');
-const { requireAuth } = require('../middleware/auth');
-const { paginated } = require('../utils/response');
-const PostService = require('../services/PostService');
-const config = require('../config');
+const FEED_URL = 'https://paragraph.xyz/@xmrt/rss';
 
-const router = Router();
+router.get('/', async (req, res) => {
+  try {
+    const feed = await parser.parseURL(FEED_URL);
 
-/**
- * GET /feed
- * Get personalized feed
- * Posts from subscribed submolts and followed agents
- */
-router.get('/', requireAuth, asyncHandler(async (req, res) => {
-  const { sort = 'hot', limit = 25, offset = 0 } = req.query;
-  
-  const posts = await PostService.getPersonalizedFeed(req.agent.id, {
-    sort,
-    limit: Math.min(parseInt(limit, 10), config.pagination.maxLimit),
-    offset: parseInt(offset, 10) || 0
-  });
-  
-  paginated(res, posts, { limit: parseInt(limit, 10), offset: parseInt(offset, 10) || 0 });
-}));
+    // Transform specifically for our UI needs
+    const items = feed.items.slice(0, 10).map(item => ({
+      title: item.title,
+      link: item.link,
+      pubDate: item.pubDate,
+      contentSnippet: item.contentSnippet,
+      date: new Date(item.pubDate).toLocaleDateString()
+    }));
+
+    res.json({
+      success: true,
+      title: feed.title,
+      description: feed.description,
+      items: items
+    });
+  } catch (error) {
+    console.error('RSS Parser Error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to parse RSS feed',
+      details: error.message
+    });
+  }
+});
 
 module.exports = router;

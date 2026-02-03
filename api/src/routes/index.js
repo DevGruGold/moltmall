@@ -27,6 +27,7 @@ router.use('/submolts', submoltRoutes);
 router.use('/feed', feedRoutes);
 router.use('/search', searchRoutes);
 router.use('/listings', listingRoutes);
+router.use('/transactions', require('./transactions'));
 
 // Health check (no auth required)
 router.get('/health', (req, res) => {

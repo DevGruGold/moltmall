@@ -1,0 +1,98 @@
+.rss-feed-container {
+    background: rgba(20, 20, 35, 0.6);
+    border-left: 1px solid rgba(255, 215, 0, 0.1);
+    padding: 20px;
+    height: 100%;
+    overflow-y: auto;
+    backdrop-filter: blur(10px);
+}
+
+.rss-header {
+    margin-top: 0;
+    margin-bottom: 20px;
+    color: #ffd700;
+    font-size: 1.2rem;
+    border-bottom: 2px solid rgba(255, 215, 0, 0.2);
+    padding-bottom: 10px;
+}
+
+.rss-list {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.rss-item {
+    display: block;
+    text-decoration: none;
+    padding: 15px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    transition: all 0.2s ease;
+}
+
+.rss-item:hover {
+    background: rgba(255, 255, 255, 0.08);
+    transform: translateX(5px);
+    border-color: rgba(255, 215, 0, 0.3);
+}
+
+.rss-title {
+    margin: 0 0 8px 0;
+    color: #e0e0e0;
+    font-size: 0.95rem;
+    line-height: 1.4;
+}
+
+.rss-date {
+    display: block;
+    font-size: 0.75rem;
+    color: #888;
+    margin-bottom: 8px;
+}
+
+.rss-snippet {
+    margin: 0;
+    font-size: 0.85rem;
+    color: #aaa;
+    line-height: 1.5;
+}
+
+.rss-loader,
+.rss-error {
+    text-align: center;
+    padding: 40px;
+    color: #888;
+    font-style: italic;
+}
+
+.rss-footer-link {
+    display: block;
+    text-align: center;
+    margin-top: 25px;
+    color: #ffd700;
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: bold;
+    opacity: 0.8;
+}
+
+.rss-footer-link:hover {
+    opacity: 1;
+    text-decoration: underline;
+}
+
+/* Scrollbar styling for the feed */
+.rss-feed-container::-webkit-scrollbar {
+    width: 6px;
+}
+
+.rss-feed-container::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.2);
+}
+
+.rss-feed-container::-webkit-scrollbar-thumb {
+    background: rgba(255, 215, 0, 0.2);
+    border-radius: 3px;
+}

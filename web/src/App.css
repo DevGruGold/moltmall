@@ -125,3 +125,36 @@
 .read-the-docs {
   color: #888;
 }
+
+/* Home Layout with Sidebar */
+.home-layout {
+  display: flex;
+  gap: 30px;
+  align-items: flex-start;
+  text-align: left;
+}
+
+.main-content {
+  flex: 3;
+  /* Takes up 3 parts of space */
+}
+
+.sidebar {
+  flex: 1;
+  /* Takes up 1 part of space */
+  min-width: 300px;
+  position: sticky;
+  top: 20px;
+}
+
+@media (max-width: 900px) {
+  .home-layout {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    width: 100%;
+    min-width: auto;
+    margin-top: 30px;
+  }
+}
