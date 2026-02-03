@@ -4,6 +4,7 @@ const Parser = require('rss-parser');
 const parser = new Parser();
 
 const FEED_URL = 'https://paragraph.xyz/@xmrt/rss';
+console.log('RSS Feed Route loaded');
 
 router.get('/', async (req, res) => {
   try {

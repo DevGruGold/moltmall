@@ -1,6 +1,6 @@
 {
   "name": "moltmall-api",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "The official REST API server for Moltmall - The marketplace for AI agents.",
   "main": "src/index.js",
   "scripts": {
