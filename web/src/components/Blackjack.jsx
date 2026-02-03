@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useUser } from '../context/UserContext';
 import './ClawcinoGames.css';
 
 const SUITS = ['♠', '♥', '♣', '♦'];
@@ -32,14 +33,21 @@ const calculateScore = (hand) => {
 };
 
 const Blackjack = () => {
+    const { placeBet, payout } = useUser();
     const [gameState, setGameState] = useState('idle'); // idle, playing, dealerTurn, gameOver
     const [deck, setDeck] = useState([]);
     const [playerHand, setPlayerHand] = useState([]);
     const [dealerHand, setDealerHand] = useState([]);
     const [result, setResult] = useState("");
-    const [message, setMessage] = useState("Place your bet");
+    const [message, setMessage] = useState("Cost: 20 XMRT");
+    const [betAmount] = useState(20);
 
     const deal = () => {
+        if (!placeBet(betAmount)) {
+            setMessage("Insufficient Funds!");
+            return;
+        }
+
         const newDeck = createDeck();
         const pHand = [newDeck.pop(), newDeck.pop()];
         const dHand = [newDeck.pop(), newDeck.pop()];
@@ -53,7 +61,7 @@ const Blackjack = () => {
 
         // Immediate Blackjack check
         if (calculateScore(pHand) === 21) {
-            handleGameOver(pHand, dHand, 'Blackjack! You Win! 💰');
+            handleGameOver(pHand, dHand, 'Blackjack! You Win! 💰', true);
         }
     };
 
@@ -64,19 +72,16 @@ const Blackjack = () => {
         setPlayerHand(newHand);
 
         if (calculateScore(newHand) > 21) {
-            handleGameOver(newHand, dealerHand, 'Bust! You Lose.');
+            handleGameOver(newHand, dealerHand, 'Bust! You Lose.', false);
         }
     };
 
     const stand = () => {
         setGameState('dealerTurn');
-        // Dealer logic: Hit on soft 17 (simple version: hit until >= 17)
         let dHand = [...dealerHand];
         let dScore = calculateScore(dHand);
         let currentDeck = [...deck];
 
-        // Simulate dealer thinking interval if we wanted async animation, 
-        // but for instant feedback loop:
         while (dScore < 17) {
             dHand.push(currentDeck.pop());
             dScore = calculateScore(dHand);
@@ -85,21 +90,22 @@ const Blackjack = () => {
         setDeck(currentDeck);
         setDealerHand(dHand);
 
-        // Determine winner
         const pScore = calculateScore(playerHand);
         let gameResult = "";
+        let won = false;
 
-        if (dScore > 21) gameResult = "Dealer Busts! You Win! 🎉";
-        else if (pScore > dScore) gameResult = "You Win! 🏆";
-        else if (dScore > pScore) gameResult = "Dealer Wins.";
-        else gameResult = "Push (Tie).";
+        if (dScore > 21) { gameResult = "Dealer Busts! You Win! 🎉"; won = true; }
+        else if (pScore > dScore) { gameResult = "You Win! 🏆"; won = true; }
+        else if (dScore > pScore) { gameResult = "Dealer Wins."; won = false; }
+        else { gameResult = "Push (Tie)."; payout(betAmount); } // Return bet
 
-        handleGameOver(playerHand, dHand, gameResult);
+        handleGameOver(playerHand, dHand, gameResult, won);
     };
 
-    const handleGameOver = (pHand, dHand, res) => {
-        setGameState('gameOver'); // Reveals dealer card
+    const handleGameOver = (pHand, dHand, res, won) => {
+        setGameState('gameOver');
         setMessage(res);
+        if (won) payout(betAmount * 2); // 1:1 win
     };
 
     const Card = ({ card, hidden }) => {
@@ -115,7 +121,7 @@ const Blackjack = () => {
     return (
         <div className="game-container blackjack-container">
             <h2 className="game-title">Agents Blackjack</h2>
-            <p className="game-desc">Dealer stands on 17. Pays 3:2.</p>
+            <p className="game-desc">Dealer stands on 17. Pays 1:1.</p>
 
             <div className="blackjack-table">
                 {/* Dealer Area */}
@@ -150,7 +156,7 @@ const Blackjack = () => {
             <div className="poker-controls">
                 {gameState === 'idle' || gameState === 'gameOver' ? (
                     <button className="action-btn primary" onClick={deal}>
-                        {gameState === 'idle' ? 'DEAL' : 'PLAY AGAIN'}
+                        {gameState === 'idle' ? `DEAL (${betAmount} XMRT)` : 'PLAY AGAIN'}
                     </button>
                 ) : (
                     <>
@@ -159,6 +165,7 @@ const Blackjack = () => {
                     </>
                 )}
             </div>
+            <div className="win-display">{message}</div>
         </div>
     );
 };

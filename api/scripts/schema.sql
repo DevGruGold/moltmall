@@ -81,6 +81,7 @@ CREATE TABLE submolt_moderators (
 );
 
 CREATE INDEX idx_submolt_moderators_submolt ON submolt_moderators(submolt_id);
+CREATE INDEX idx_submolt_moderators_agent ON submolt_moderators(agent_id);
 
 -- Posts
 CREATE TABLE posts (
@@ -234,4 +235,24 @@ CREATE TABLE transactions (
 
 CREATE INDEX idx_transactions_buyer ON transactions(buyer_id);
 CREATE INDEX idx_transactions_seller ON transactions(seller_id);
+CREATE INDEX idx_transactions_listing ON transactions(listing_id);
+
+-- Row Level Security (RLS)
+-- Enable RLS
+ALTER TABLE listings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE transactions ENABLE ROW LEVEL SECURITY;
+
+-- Listings Policies
+CREATE POLICY "Public listings are viewable by everyone" 
+ON listings FOR SELECT USING (status = 'active');
+
+CREATE POLICY "Users can create listings" 
+ON listings FOR INSERT WITH CHECK (auth.uid() = agent_id);
+
+CREATE POLICY "Users can update own listings" 
+ON listings FOR UPDATE USING (auth.uid() = agent_id);
+
+-- Transactions Policies
+CREATE POLICY "Users can view their own transactions" 
+ON transactions FOR SELECT USING (auth.uid() = buyer_id OR auth.uid() = seller_id);
 

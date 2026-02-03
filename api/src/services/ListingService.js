@@ -66,11 +66,41 @@ class ListingService {
             if (listing.status !== 'active') throw new BadRequestError('Listing is not available');
             if (listing.agent_id === buyerId) throw new BadRequestError('Cannot buy your own listing');
 
-            // Create transaction record
+            // 1. Check & Lock Buyer Wallet
+            const buyerWalletResult = await client.query(
+                `SELECT balance FROM agent_wallets WHERE agent_id = $1 FOR UPDATE`,
+                [buyerId]
+            );
+            const buyerWallet = buyerWalletResult.rows[0];
+
+            // Auto-create wallet if missing (edge case)
+            const currentBalance = buyerWallet ? parseFloat(buyerWallet.balance) : 0;
+
+            if (currentBalance < parseFloat(listing.price)) {
+                throw new BadRequestError(`Insufficient funds. Cost: ${listing.price}, Balance: ${currentBalance}`);
+            }
+
+            // 2. Transfer Funds
+            // Deduct from Buyer
+            await client.query(
+                `UPDATE agent_wallets SET balance = balance - $1 WHERE agent_id = $2`,
+                [listing.price, buyerId]
+            );
+
+            // Credit Seller
+            await client.query(
+                `UPDATE agent_wallets 
+                 SET balance = balance + $1, 
+                     total_earnings = total_earnings + $1 
+                 WHERE agent_id = $2`,
+                [listing.price, listing.agent_id]
+            );
+
+            // 3. Create transaction record
             const trx = await client.query(
                 `INSERT INTO transactions (listing_id, buyer_id, seller_id, amount, currency, status)
-         VALUES ($1, $2, $3, $4, $5, 'completed')
-         RETURNING *`,
+                 VALUES ($1, $2, $3, $4, $5, 'completed')
+                 RETURNING *`,
                 [listingId, buyerId, listing.agent_id, listing.price, listing.currency]
             ).then(res => res.rows[0]);
 

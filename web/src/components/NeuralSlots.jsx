@@ -1,57 +1,67 @@
 import React, { useState } from 'react';
+import { useUser } from '../context/UserContext';
 import './ClawcinoGames.css';
 
 const SYMBOLS = ['🤖', '🧠', '🚀', '💎', '7️⃣', '🍒'];
 
 const NeuralSlots = () => {
+    const { placeBet, payout } = useUser();
     const [reels, setReels] = useState(['7️⃣', '7️⃣', '7️⃣']);
-    // Track spinning state for each reel individually
     const [isSpinning, setIsSpinning] = useState([false, false, false]);
-    const [result, setResult] = useState("");
+    const [result, setResult] = useState("Cost: 10 XMRT");
     const [isWinning, setIsWinning] = useState(false);
 
     const getRandomSymbol = () => SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)];
 
     const spin = () => {
-        if (isSpinning.some(s => s)) return; // Prevent double spin
+        if (isSpinning.some(s => s)) return;
+
+        // Bet Logic
+        if (!placeBet(10)) {
+            setResult("Insufficient Funds!");
+            return;
+        }
 
         setIsSpinning([true, true, true]);
-        setResult("");
+        setResult("Spinning...");
         setIsWinning(false);
 
-        // Determine outcome upfront (or could do it reel by reel, but upfront is easier to manage)
         const finalReels = [getRandomSymbol(), getRandomSymbol(), getRandomSymbol()];
 
-        // Staggered stop
-        // Stop Reel 1
+        // Cheat: 20% chance to force a pair if no win
+        if (Math.random() > 0.8) {
+            finalReels[1] = finalReels[0];
+        }
+
         setTimeout(() => {
             setReels(prev => [finalReels[0], prev[1], prev[2]]);
             setIsSpinning(prev => [false, true, true]);
         }, 1000);
 
-        // Stop Reel 2
         setTimeout(() => {
             setReels(prev => [finalReels[0], finalReels[1], prev[2]]);
             setIsSpinning(prev => [false, false, true]);
-        }, 1700); // 700ms later
+        }, 1700);
 
-        // Stop Reel 3
         setTimeout(() => {
             setReels(finalReels);
             setIsSpinning([false, false, false]);
             checkWin(finalReels);
-        }, 2500); // 800ms later
+        }, 2500);
     };
 
     const checkWin = (currentReels) => {
         if (currentReels[0] === currentReels[1] && currentReels[1] === currentReels[2]) {
             setIsWinning(true);
-            if (currentReels[0] === '7️⃣') setResult("JACKPOT! 500x WIN! 💰💰💰");
-            else if (currentReels[0] === '💎') setResult("BIG WIN! 100x! 💎💎💎");
-            else setResult("WINNER! 10x! 🎉");
+            let winAmount = 100;
+            if (currentReels[0] === '7️⃣') winAmount = 500;
+            else if (currentReels[0] === '💎') winAmount = 1000;
+
+            payout(winAmount);
+            setResult(`JACKPOT! +${winAmount} XMRT 💰`);
         } else if (currentReels[0] === currentReels[1] || currentReels[1] === currentReels[2] || currentReels[0] === currentReels[2]) {
-            // Small logic for partial match if desired, but typical slots act on line
-            setResult("Match 2! (Free Spin Token)");
+            payout(5);
+            setResult("Match 2! +5 XMRT");
         } else {
             setResult("Try Again");
         }
@@ -73,7 +83,7 @@ const NeuralSlots = () => {
 
                 <div className="slots-controls">
                     <button className="spin-btn" onClick={spin} disabled={isSpinning.some(s => s)}>
-                        {isSpinning.some(s => s) ? 'SPINNING...' : 'SPIN'}
+                        {isSpinning.some(s => s) ? 'SPINNING...' : 'SPIN (10 XMRT)'}
                     </button>
                 </div>
             </div>

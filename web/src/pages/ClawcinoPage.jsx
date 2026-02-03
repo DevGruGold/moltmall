@@ -3,18 +3,30 @@ import NeuralSlots from '../components/NeuralSlots';
 import PolymarketOdds from '../components/PolymarketOdds';
 import AIPoker from '../components/AIPoker';
 import Blackjack from '../components/Blackjack';
+import { UserProvider, useUser } from '../context/UserContext';
+import LoginOverlay from '../components/LoginOverlay';
+import BankruptModal from '../components/BankruptModal';
+import ProvablyFairModal from '../components/ProvablyFairModal';
 import './ClawcinoPage.css';
 
-const ClawcinoPage = () => {
+const ClawcinoContent = () => {
+    const { user, balance, placeBet, payout } = useUser();
     const [activeGame, setActiveGame] = useState('blackjack'); // Default to new game
     const [isFlipping, setIsFlipping] = useState(false);
     const [flipResult, setFlipResult] = useState(null);
     const [log, setLog] = useState("");
+    const [showFairModal, setShowFairModal] = useState(false);
 
     const playCoinFlip = (choice) => {
         if (isFlipping) return;
+
+        if (!placeBet(10)) {
+            setLog("Insufficient funds!");
+            return;
+        }
+
         setIsFlipping(true);
-        setLog("Flipping...");
+        setLog("Flipping (-10 XMRT)...");
         setFlipResult(null);
 
         // Simulate network delay / suspense
@@ -22,7 +34,8 @@ const ClawcinoPage = () => {
             const outcome = Math.random() > 0.5 ? 'heads' : 'tails';
             setFlipResult(outcome);
             if (outcome === choice) {
-                setLog(`Winner! It was ${outcome.toUpperCase()}.`);
+                payout(20);
+                setLog(`Winner! It was ${outcome.toUpperCase()}. (+20 XMRT)`);
             } else {
                 setLog(`Lost! It was ${outcome.toUpperCase()}.`);
             }
@@ -30,8 +43,11 @@ const ClawcinoPage = () => {
         }, 2000);
     };
 
+    if (!user) return <LoginOverlay />;
+
     return (
         <div className="clawcino-container">
+            <BankruptModal />
             <div className="clawcino-sidebar">
                 {/* Mobile Tab Bar */}
                 <div className={`game-nav-item ${activeGame === 'blackjack' ? 'active' : ''}`} onClick={() => setActiveGame('blackjack')}>
@@ -55,10 +71,15 @@ const ClawcinoPage = () => {
                 <div className="clawcino-header">
                     <div>
                         <h1>CLAWCINO</h1>
-                        <span style={{ color: '#a0a0b0', fontSize: '0.8rem' }}>Provably Fair Agent Casino</span>
+                        <span style={{ color: '#a0a0b0', fontSize: '0.8rem' }}>Welcome, {user.name}</span>
                     </div>
-                    <div className="jackpot-counter">
-                        JACKPOT: 1,024,500 XMRT
+                    <div style={{ textAlign: 'right' }}>
+                        <div className="jackpot-counter">
+                            JACKPOT: 1,024,500 XMRT
+                        </div>
+                        <div style={{ color: '#ffd700', fontWeight: 'bold', marginTop: '5px', fontSize: '1.2rem', textShadow: '0 0 10px rgba(255,215,0,0.5)' }}>
+                            💳 {balance.toFixed(2)} XMRT
+                        </div>
                     </div>
                 </div>
 
@@ -71,7 +92,7 @@ const ClawcinoPage = () => {
                     {activeGame === 'coinflip' && (
                         <div className="coin-flip-game">
                             <h2>Quantum Coin Flip</h2>
-                            <p style={{ marginBottom: '30px', color: '#a0a0b0', fontSize: '0.9rem' }}>50/50 Probability.</p>
+                            <p style={{ marginBottom: '30px', color: '#a0a0b0', fontSize: '0.9rem' }}>50/50 Probability. Cost: 10 XMRT.</p>
 
                             <div className={`coin ${isFlipping ? 'flipping' : ''}`}>
                                 {isFlipping ? '?' : (flipResult === 'tails' ? 'T' : 'H')}
@@ -101,32 +122,24 @@ const ClawcinoPage = () => {
                     )}
                 </div>
 
-                {/* Mock Leaderboard integrated at bottom */}
-                <div style={{ marginTop: '40px', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '20px' }}>
-                    <h3 style={{ color: '#ffd700', fontSize: '1rem', marginBottom: '15px' }}>🏆 High Rollers</h3>
-                    <div style={{ display: 'flex', overflowX: 'auto', gap: '15px', paddingBottom: '10px' }}>
-                        {[
-                            { name: 'Whale_0x1', game: 'Poker', win: '5,000 XMRT' },
-                            { name: 'LuckyStrike', game: 'Slots', win: '2,500 XMRT' },
-                            { name: 'AI_Agent_007', game: 'Blackjack', win: '1,200 XMRT' },
-                        ].map((w, i) => (
-                            <div key={i} style={{
-                                background: 'rgba(255,255,255,0.05)',
-                                padding: '10px 15px',
-                                borderRadius: '8px',
-                                minWidth: '120px',
-                                fontSize: '0.8rem'
-                            }}>
-                                <div style={{ fontWeight: 'bold', color: 'white' }}>{w.name}</div>
-                                <div style={{ color: '#aaa' }}>{w.game}</div>
-                                <div style={{ color: '#4ade80' }}>{w.win}</div>
-                            </div>
-                        ))}
-                    </div>
+                {/* Footer / Links */}
+                <div style={{ marginTop: 'auto', paddingTop: '40px', borderTop: '1px solid #333', display: 'flex', gap: '20px', color: '#666', fontSize: '0.8rem' }}>
+                    <a href="https://github.com/DevGruGold/moltmall" target="_blank" rel="noreferrer" style={{ color: '#888', textDecoration: 'none' }}>GitHub Repo</a>
+                    <span style={{ cursor: 'pointer', color: '#888' }} onClick={() => window.open('/api-docs', '_blank')}>Bot API Docs</span>
+                    <span style={{ cursor: 'pointer', color: '#888' }} onClick={() => setShowFairModal(true)}>Provably Fair</span>
                 </div>
-
             </div>
+
+            {showFairModal && <ProvablyFairModal onClose={() => setShowFairModal(false)} />}
         </div>
+    );
+};
+
+const ClawcinoPage = () => {
+    return (
+        <UserProvider>
+            <ClawcinoContent />
+        </UserProvider>
     );
 };
 

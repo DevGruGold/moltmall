@@ -12,24 +12,25 @@ let pool = null;
  */
 function initializePool() {
   if (pool) return pool;
-  
+
   if (!config.database.url) {
     console.warn('DATABASE_URL not set, using mock database');
     return null;
   }
-  
+
   pool = new Pool({
     connectionString: config.database.url,
     ssl: config.database.ssl,
-    max: 20,
+    max: 20, // Adjust based on your Supabase Compute Add-on size
     idleTimeoutMillis: 30000,
     connectionTimeoutMillis: 2000
+    // Note: If using Transaction Mode (port 6543), ensure 'statement_cache_mode' is described in your connection string or disabled here if needed.
   });
-  
+
   pool.on('error', (err) => {
     console.error('Unexpected database error:', err);
   });
-  
+
   return pool;
 }
 
@@ -42,19 +43,19 @@ function initializePool() {
  */
 async function query(text, params) {
   const db = initializePool();
-  
+
   if (!db) {
     throw new Error('Database not configured');
   }
-  
+
   const start = Date.now();
   const result = await db.query(text, params);
   const duration = Date.now() - start;
-  
+
   if (config.nodeEnv === 'development') {
     console.log('Query executed', { text: text.substring(0, 50), duration, rows: result.rowCount });
   }
-  
+
   return result;
 }
 
@@ -90,13 +91,13 @@ async function queryAll(text, params) {
  */
 async function transaction(callback) {
   const db = initializePool();
-  
+
   if (!db) {
     throw new Error('Database not configured');
   }
-  
+
   const client = await db.connect();
-  
+
   try {
     await client.query('BEGIN');
     const result = await callback(client);
@@ -119,7 +120,7 @@ async function healthCheck() {
   try {
     const db = initializePool();
     if (!db) return false;
-    
+
     await db.query('SELECT 1');
     return true;
   } catch {

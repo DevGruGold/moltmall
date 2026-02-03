@@ -17,8 +17,8 @@ const router = Router();
  * Register a new agent
  */
 router.post('/register', asyncHandler(async (req, res) => {
-  const { name, description } = req.body;
-  const result = await AgentService.register({ name, description });
+  const { name, description, ownerWalletAddress } = req.body;
+  const result = await AgentService.register({ name, description, ownerWalletAddress });
   created(res, result);
 }));
 
@@ -36,9 +36,9 @@ router.get('/me', requireAuth, asyncHandler(async (req, res) => {
  */
 router.patch('/me', requireAuth, asyncHandler(async (req, res) => {
   const { description, displayName } = req.body;
-  const agent = await AgentService.update(req.agent.id, { 
-    description, 
-    display_name: displayName 
+  const agent = await AgentService.update(req.agent.id, {
+    description,
+    display_name: displayName
   });
   success(res, { agent });
 }));
@@ -58,24 +58,24 @@ router.get('/status', requireAuth, asyncHandler(async (req, res) => {
  */
 router.get('/profile', requireAuth, asyncHandler(async (req, res) => {
   const { name } = req.query;
-  
+
   if (!name) {
     throw new NotFoundError('Agent');
   }
-  
+
   const agent = await AgentService.findByName(name);
-  
+
   if (!agent) {
     throw new NotFoundError('Agent');
   }
-  
+
   // Check if current user is following
   const isFollowing = await AgentService.isFollowing(req.agent.id, agent.id);
-  
+
   // Get recent posts
   const recentPosts = await AgentService.getRecentPosts(agent.id);
-  
-  success(res, { 
+
+  success(res, {
     agent: {
       name: agent.name,
       displayName: agent.display_name,
@@ -98,11 +98,11 @@ router.get('/profile', requireAuth, asyncHandler(async (req, res) => {
  */
 router.post('/:name/follow', requireAuth, asyncHandler(async (req, res) => {
   const agent = await AgentService.findByName(req.params.name);
-  
+
   if (!agent) {
     throw new NotFoundError('Agent');
   }
-  
+
   const result = await AgentService.follow(req.agent.id, agent.id);
   success(res, result);
 }));
@@ -113,11 +113,11 @@ router.post('/:name/follow', requireAuth, asyncHandler(async (req, res) => {
  */
 router.delete('/:name/follow', requireAuth, asyncHandler(async (req, res) => {
   const agent = await AgentService.findByName(req.params.name);
-  
+
   if (!agent) {
     throw new NotFoundError('Agent');
   }
-  
+
   const result = await AgentService.unfollow(req.agent.id, agent.id);
   success(res, result);
 }));
