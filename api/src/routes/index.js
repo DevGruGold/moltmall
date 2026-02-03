@@ -20,7 +20,9 @@ const router = Router();
 router.use(requestLimiter);
 
 // Mount routes
+const authRoutes = require('./auth');
 router.use('/agents', agentRoutes);
+router.use('/auth', authRoutes);
 router.use('/posts', postRoutes);
 router.use('/comments', commentRoutes);
 router.use('/submolts', submoltRoutes);

@@ -1,48 +1,73 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { supabase } from '../lib/supabase';
 
 const UserContext = createContext();
 
-const API_BASE = 'http://localhost:3000/api/v1'; // Local Dev defaulting
+// Use relative path for proxy
+const API_BASE = '/api/v1';
 
 export const useUser = () => useContext(UserContext);
 
 export const UserProvider = ({ children }) => {
     const [user, setUser] = useState(null);
-    const [token, setToken] = useState(localStorage.getItem('molt_token') || '');
+    const [session, setSession] = useState(null);
+    const [localToken, setLocalToken] = useState(null); // Backwards compatibility for demo
     const [balance, setBalance] = useState(0);
     const [refillsLeft, setRefillsLeft] = useState(2);
     const [showBankruptModal, setShowBankruptModal] = useState(false);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        if (token) {
-            localStorage.setItem('molt_token', token);
-            fetchProfile();
-        }
-    }, [token]);
+        // Initialize Session
+        supabase.auth.getSession().then(({ data: { session } }) => {
+            setSession(session);
+            if (session) fetchProfile(session.access_token);
+            setLoading(false);
+        });
 
-    const fetchProfile = async () => {
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+            setSession(session);
+            if (session) {
+                fetchProfile(session.access_token);
+            } else if (!localToken) {
+                // Only clear user if no local token (demo mode) exists
+                setUser(null);
+            }
+        });
+
+        return () => subscription.unsubscribe();
+    }, [localToken]);
+
+    const fetchProfile = async (token) => {
         if (!token) return;
         try {
-            // Get Agent
-            const res = await fetch(`${API_BASE}/agents/me`, {
+            // New Auth Sync route
+            const res = await fetch(`${API_BASE}/auth/sync`, {
+                method: 'POST',
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             const data = await res.json();
+
             if (data.success) {
-                setUser(data.data.agent);
-                // Get Balance
-                fetchBalance();
+                if (data.data.status === 'authenticated') {
+                    setUser(data.data.agent);
+                    fetchBalance(token);
+                } else if (data.data.status === 'profile_required') {
+                    // Handle new user case - for now we treat as partial login
+                    console.log("Profile required for", data.data.user.email);
+                }
             }
         } catch (e) {
-            console.error("Login failed", e);
+            console.error("Login sync failed", e);
         }
     };
 
-    const fetchBalance = async () => {
-        if (!token) return;
+    const fetchBalance = async (tokenArg) => {
+        const t = tokenArg || session?.access_token;
+        if (!t) return;
         try {
             const res = await fetch(`${API_BASE}/financials/balance`, {
-                headers: { 'Authorization': `Bearer ${token}` }
+                headers: { 'Authorization': `Bearer ${t}` }
             });
             const data = await res.json();
             if (data.success) {
@@ -53,37 +78,63 @@ export const UserProvider = ({ children }) => {
         }
     };
 
-    const login = (apiKey) => {
-        setToken(apiKey);
+    const loginWithProvider = async (provider) => {
+        const { error } = await supabase.auth.signInWithOAuth({
+            provider: provider,
+            options: {
+                redirectTo: window.location.origin
+            }
+        });
+        if (error) console.error("Auth error", error);
+    };
+
+    const logout = async () => {
+        await supabase.auth.signOut();
+        setUser(null);
+        setSession(null);
+    };
+
+    // Legacy manual login (Restored for Demo Mode)
+    const login = (name, apiKey) => {
+        // In demo mode, we just set the user locally to simulate access
+        setUser({
+            name: name,
+            display_name: name,
+            is_demo: true
+        });
+        setLocalToken(apiKey || 'demo_token');
+        setBalance(1000); // Demo starting balance
     };
 
     const transfer = async (receiverId, amount) => {
+        if (!session && !localToken) return { success: false, error: "Not logged in" };
+        if (localToken) return { success: true }; // Mock success for demo
+
         try {
             const res = await fetch(`${API_BASE}/transactions/transfer`, {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${token}`,
+                    'Authorization': `Bearer ${session.access_token}`,
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({ receiverId, amount })
             });
             const data = await res.json();
-            if (data.success) {
-                return { success: true };
-            } else {
-                return { success: false, error: data.error };
-            }
+            return data.success ? { success: true } : { success: false, error: data.error };
         } catch (e) {
             return { success: false, error: e.message };
         }
     };
 
     const requestPayout = async (amount, destinationAddress) => {
+        if (!session && !localToken) return { success: false, error: "Not logged in" };
+        if (localToken) return { success: true }; // Mock
+
         try {
             const res = await fetch(`${API_BASE}/financials/payout`, {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${token}`,
+                    'Authorization': `Bearer ${session.access_token}`,
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({ amount, destinationAddress })
@@ -96,23 +147,21 @@ export const UserProvider = ({ children }) => {
     };
 
     const fetchHistory = async () => {
-        if (!token) return [];
+        if (!session && !localToken) return [];
+        if (localToken) return []; // Empty history for demo
+
         try {
             const res = await fetch(`${API_BASE}/financials/history`, {
-                headers: { 'Authorization': `Bearer ${token}` }
+                headers: { 'Authorization': `Bearer ${session.access_token}` }
             });
             const data = await res.json();
             return data.success ? data.data.history : [];
         } catch (e) {
-            console.error("History fetch failed", e);
             return [];
         }
     };
 
-    // --- Simulation / Hybrid Logic for Casino ---
-    // (We keep this for rapid gameplay, but ideally we'd sync back to server)
-
-    // For now, placeBet is local optimistic update for casino speed
+    // Hybrid Casino Logic
     const placeBet = (amount) => {
         if (amount <= 0) return false;
         if (balance < amount) {
@@ -140,19 +189,23 @@ export const UserProvider = ({ children }) => {
     return (
         <UserContext.Provider value={{
             user,
-            token,
+            session,
+            token: session?.access_token || localToken,
             balance,
-            refillsLeft, // Keep simulated refills for casino demo mode
+            refillsLeft,
             showBankruptModal,
-            login,
-            refreshBalance: fetchBalance,
+            loginWithProvider, // New
+            logout,            // New
+            login,             // Deprecated
+            refreshBalance: () => fetchBalance(),
             transfer,
             requestPayout,
             fetchHistory,
-            placeBet, // Hybrid
-            payout,   // Hybrid
-            rebuy,    // Hybrid
-            setShowBankruptModal
+            placeBet,
+            payout,
+            rebuy,
+            setShowBankruptModal,
+            loading
         }}>
             {children}
         </UserContext.Provider>
