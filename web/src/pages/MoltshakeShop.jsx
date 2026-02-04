@@ -12,6 +12,9 @@ const MoltshakeShop = () => {
     const [mixingItem, setMixingItem] = useState(null);
     const [mixProgress, setMixProgress] = useState(0);
     const [currentTrack, setCurrentTrack] = useState('Lo-Fi Chill');
+    const [isPlaying, setIsPlaying] = useState(false);
+    const audioCtxRef = useRef(null);
+    const oscillatorsRef = useRef([]);
     const chatEndRef = useRef(null);
 
     const menu = [
@@ -54,6 +57,130 @@ const MoltshakeShop = () => {
         return () => clearInterval(interval);
     }, []);
 
+    // Web Audio API Engine
+    useEffect(() => {
+        if (isPlaying) {
+            startAudio();
+        } else {
+            stopAudio();
+        }
+        return () => stopAudio();
+    }, [isPlaying, currentTrack]);
+
+    const startAudio = () => {
+        stopAudio(); // Clear previous
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        const ctx = new AudioContext();
+        audioCtxRef.current = ctx;
+
+        const masterGain = ctx.createGain();
+        masterGain.gain.value = 0.15; // Low volume for background
+        masterGain.connect(ctx.destination);
+
+        // Procedural Audio Generators
+        if (currentTrack === 'Lo-Fi Chill') {
+            createLoFiBeat(ctx, masterGain);
+        } else if (currentTrack === 'Cyberpunk Synth') {
+            createSynthDrone(ctx, masterGain);
+        } else {
+            createSimpleBeat(ctx, masterGain);
+        }
+    };
+
+    const stopAudio = () => {
+        oscillatorsRef.current.forEach(osc => {
+            try { osc.stop(); osc.disconnect(); } catch (e) { }
+        });
+        oscillatorsRef.current = [];
+        if (audioCtxRef.current) {
+            audioCtxRef.current.close().catch(e => console.error(e));
+            audioCtxRef.current = null;
+        }
+    };
+
+    const createLoFiBeat = (ctx, destination) => {
+        // Kick
+        const kickInterval = setInterval(() => {
+            if (ctx.state === 'closed') return clearInterval(kickInterval);
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.frequency.setValueAtTime(150, ctx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
+            gain.gain.setValueAtTime(0.8, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
+            osc.connect(gain);
+            gain.connect(destination);
+            osc.start(ctx.currentTime);
+            osc.stop(ctx.currentTime + 0.5);
+        }, 2000); // 60 BPM
+
+        // Hi-hat
+        const hatInterval = setInterval(() => {
+            if (ctx.state === 'closed') return clearInterval(hatInterval);
+            const bufferSize = ctx.sampleRate * 0.1; // 100ms
+            const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+            const data = buffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) {
+                data[i] = Math.random() * 2 - 1;
+            }
+            const noise = ctx.createBufferSource();
+            noise.buffer = buffer;
+            const filter = ctx.createBiquadFilter();
+            filter.type = 'highpass';
+            filter.frequency.value = 5000;
+            const gain = ctx.createGain();
+            gain.gain.setValueAtTime(0.1, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.05);
+            noise.connect(filter);
+            filter.connect(gain);
+            gain.connect(destination);
+            noise.start(ctx.currentTime);
+        }, 500); // 16th notes
+
+        // Add intervals to a ref to clear them if needed (simplified for this demo)
+    };
+
+    const createSynthDrone = (ctx, destination) => {
+        const osc1 = ctx.createOscillator();
+        osc1.type = 'sawtooth';
+        osc1.frequency.value = 55; // Low A
+        const filter = ctx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.value = 400;
+
+        // LFO for filter
+        const lfo = ctx.createOscillator();
+        lfo.type = 'sine';
+        lfo.frequency.value = 0.5;
+        const lfoGain = ctx.createGain();
+        lfoGain.gain.value = 300;
+        lfo.connect(lfoGain);
+        lfoGain.connect(filter.frequency);
+        lfo.start();
+
+        osc1.connect(filter);
+        filter.connect(destination);
+        osc1.start();
+        oscillatorsRef.current.push(osc1, lfo);
+    };
+
+    const createSimpleBeat = (ctx, destination) => {
+        // Placeholder for other tracks
+        const osc = ctx.createOscillator();
+        osc.type = 'triangle';
+        osc.frequency.value = 220;
+        const gain = ctx.createGain();
+        gain.gain.value = 0.1;
+        osc.connect(gain);
+        gain.connect(destination);
+        osc.start();
+        oscillatorsRef.current.push(osc);
+    };
+
+    const togglePlay = () => {
+        setIsPlaying(!isPlaying);
+    };
+
     const handleSendMessage = (e) => {
         e.preventDefault();
         if (!input.trim()) return;
@@ -70,22 +197,22 @@ const MoltshakeShop = () => {
 
     const handleOrder = (item) => {
         if (mixingItem) return; // Busy
-        if (confirm(`Order ${item.name} for ${item.price} XMRT?`)) {
-            setMixingItem(item);
-            setMixProgress(0);
 
-            // Start mixing process
-            let progress = 0;
-            const mixInterval = setInterval(() => {
-                progress += 5; // Auto progress
-                setMixProgress(p => Math.min(p + 5, 100));
+        // Immediate order for smoother UX
+        setMixingItem(item);
+        setMixProgress(0);
 
-                if (progress >= 100) {
-                    clearInterval(mixInterval);
-                    completeOrder(item);
-                }
-            }, 100);
-        }
+        // Start mixing process
+        let progress = 0;
+        const mixInterval = setInterval(() => {
+            progress += 5; // Auto progress
+            setMixProgress(p => Math.min(p + 5, 100));
+
+            if (progress >= 100) {
+                clearInterval(mixInterval);
+                completeOrder(item);
+            }
+        }, 100);
     };
 
     const shakeIt = () => {
@@ -114,13 +241,18 @@ const MoltshakeShop = () => {
 
             <div className="jukebox">
                 <div className="track-display">
+                    <button className="btn-play" onClick={togglePlay}>
+                        {isPlaying ? '⏸️' : '▶️'}
+                    </button>
                     <span className="note-icon">🎵</span>
                     <span className="track-name">Now Playing: {currentTrack}</span>
-                    <div className="equalizer">
-                        {[1, 2, 3, 4, 5].map(i => (
-                            <div key={i} className="bar" style={{ animationDuration: `${0.4 + Math.random()}s` }}></div>
-                        ))}
-                    </div>
+                    {isPlaying && (
+                        <div className="equalizer">
+                            {[1, 2, 3, 4, 5].map(i => (
+                                <div key={i} className="bar" style={{ animationDuration: `${0.4 + Math.random()}s` }}></div>
+                            ))}
+                        </div>
+                    )}
                 </div>
                 <div className="track-controls">
                     {tracks.map(t => (
@@ -132,6 +264,9 @@ const MoltshakeShop = () => {
                             {t}
                         </button>
                     ))}
+                    <button className="btn btn-sm btn-play-pause" onClick={togglePlay}>
+                        {isPlaying ? '⏸️ Pause' : '▶️ Play'}
+                    </button>
                 </div>
             </div>
 

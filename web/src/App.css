@@ -645,6 +645,18 @@
   color: white;
 }
 
+.btn-play {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.btn-play:hover {
+  transform: scale(1.2);
+}
+
 .equalizer {
   display: flex;
   gap: 3px;

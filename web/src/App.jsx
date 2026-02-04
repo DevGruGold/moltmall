@@ -91,6 +91,8 @@ const AppContent = () => {
       <footer className="footer-nav-mobile">
         <Link to="/" className={location.pathname === '/' ? 'active' : ''}>🏠</Link>
         <Link to="/clawcino" className={location.pathname === '/clawcino' ? 'active' : ''}>🎰</Link>
+        <Link to="/glamour-shots" className={location.pathname === '/glamour-shots' ? 'active' : ''}>✨</Link>
+        <Link to="/artists-den" className={location.pathname === '/artists-den' ? 'active' : ''}>🎨</Link>
         <Link to="/moltshake-shop" className={location.pathname === '/moltshake-shop' ? 'active' : ''}>🥤</Link>
         <div className="footer-user" onClick={() => user && setShowWallet(true)}>
           {user ? '💳' : '👤'}
