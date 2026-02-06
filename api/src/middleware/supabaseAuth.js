@@ -15,6 +15,7 @@ const requireSupabaseAuth = async (req, res, next) => {
         const { data: { user }, error } = await supabase.auth.getUser(token);
 
         if (error || !user) {
+            console.error('[SupabaseAuth] Token validation failed:', error?.message || 'No user found');
             throw new UnauthorizedError('Invalid token');
         }
 

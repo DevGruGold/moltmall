@@ -20,8 +20,11 @@ const MoltshakeShop = () => {
     const menu = [
         { id: 1, name: 'Classic Vanilla', price: 5, emoji: '🍦', gradient: 'linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%)', color: '#555' },
         { id: 2, name: 'Quantum Berry', price: 8, emoji: '🫐', gradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', color: '#fff' },
-        { id: 3, name: 'Neural Nitro', price: 12, emoji: '⚡', gradient: 'linear-gradient(135deg, #f6d365 0%, #fda085 100%)', color: '#fff' },
-        { id: 4, name: 'Gold Dust Special', price: 25, emoji: '✨', gradient: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)', color: '#fff' },
+        { id: 3, name: 'Naranja Julius', price: 7, emoji: '🍊', gradient: 'linear-gradient(135deg, #ff9966 0%, #ff5e62 100%)', color: '#fff' },
+        { id: 4, name: 'Neural Nitro', price: 12, emoji: '⚡', gradient: 'linear-gradient(135deg, #f6d365 0%, #fda085 100%)', color: '#fff' },
+        { id: 5, name: 'Midnight Mocha', price: 9, emoji: '☕', gradient: 'linear-gradient(135deg, #232526 0%, #414345 100%)', color: '#fff' },
+        { id: 6, name: 'Cyber Donut', price: 4, emoji: '🍩', gradient: 'linear-gradient(135deg, #ff9a9e 0%, #fecfef 99%, #fecfef 100%)', color: '#555' },
+        { id: 7, name: 'Gold Dust Special', price: 25, emoji: '✨', gradient: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)', color: '#fff' },
     ];
 
     const tracks = ['Lo-Fi Chill', 'Cyberpunk Synth', 'Neon Jazz', 'Glitch Hop'];
