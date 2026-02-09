@@ -1,0 +1,331 @@
+import "https://deno.land/x/xhr@0.1.0/mod.ts";
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { generateElizaSystemPrompt } from '../_shared/elizaSystemPrompt.ts';
+import { buildContextualPrompt } from '../_shared/contextBuilder.ts';
+import { ELIZA_TOOLS } from '../_shared/elizaTools.ts';
+import { executeToolCall } from '../_shared/toolExecutor.ts';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { needsDataRetrieval, callDeepSeekFallback, callKimiFallback, synthesizeToolResults, TOOL_CALLING_MANDATE, convertToolsToGeminiFormat } from '../_shared/executiveHelpers.ts';
+import { emergencyStaticFallback } from '../_shared/fallbackToolExecutor.ts';
+import { startUsageTrackingWithRequest } from '../_shared/edgeFunctionUsageLogger.ts';
+
+const FUNCTION_NAME = 'gemini-chat';
+const EXECUTIVE_NAME = 'CAO';
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
+
+const MAX_TOOL_ITERATIONS = 5;
+
+serve(async (req) => {
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  // Health check
+  if (req.method === 'GET') {
+    return new Response(JSON.stringify({
+      status: "operational",
+      function: "gemini-chat",
+      executive: "Chief Analytics Officer (CAO)",
+      provider: "Google Gemini",
+      timestamp: new Date().toISOString()
+    }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+  }
+
+  const body = await req.json().catch(() => ({}));
+  const usageTracker = startUsageTrackingWithRequest(FUNCTION_NAME, req, body, EXECUTIVE_NAME);
+
+  try {
+    const { 
+      messages = [], 
+      conversationHistory = [], 
+      userContext = { ip: 'unknown', isFounder: false }, 
+      miningStats = null, 
+      systemVersion = null, 
+      councilMode = false,
+      images = []
+    } = body;
+
+    const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
+    const SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY');
+    const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
+
+    console.log(`💎 ${EXECUTIVE_NAME} (Gemini) Processing: ${messages.length} messages, Council: ${councilMode}`);
+
+    // Generate executive system prompt
+    const executivePrompt = generateElizaSystemPrompt(userContext, miningStats, systemVersion, 'eliza', 'Chief Analytics Officer');
+    let contextualPrompt = await buildContextualPrompt(executivePrompt, {
+      executiveName: EXECUTIVE_NAME,
+      conversationHistory,
+      userContext,
+      miningStats,
+      systemVersion
+    }, supabase);
+
+    if (councilMode) {
+      contextualPrompt += '\n\n=== COUNCIL MODE ACTIVATED ===\nYou are participating in an executive council deliberation. Provide data-driven, analytical input from the CAO perspective. Focus on metrics, analytics, and evidence-based decision making.';
+    }
+
+    // Prepend tool calling mandate
+    contextualPrompt = TOOL_CALLING_MANDATE + '\n\n' + contextualPrompt;
+
+    if (!GEMINI_API_KEY) {
+      console.log('⚠️ Gemini API key not found, falling back to DeepSeek');
+      const aiMessages = [{ role: 'system', content: contextualPrompt }, ...messages];
+      const deepseekResult = await callDeepSeekFallback(aiMessages, ELIZA_TOOLS);
+      
+      if (deepseekResult) {
+        if (deepseekResult.tool_calls?.length > 0) {
+          const toolResults = [];
+          for (const toolCall of deepseekResult.tool_calls) {
+            const result = await executeToolCall(supabase, toolCall, 'CAO', SUPABASE_URL, SERVICE_ROLE_KEY);
+            toolResults.push({ tool: toolCall.function.name, result });
+          }
+          const synthesized = await synthesizeToolResults(toolResults, messages[messages.length - 1]?.content || '', 'CAO');
+          await usageTracker.success({ provider: 'deepseek-fallback', tool_calls: toolResults.length });
+          return new Response(JSON.stringify({
+            success: true,
+            response: synthesized || deepseekResult.content,
+            executive: 'gemini-chat',
+            executiveTitle: 'Chief Analytics Officer (CAO)',
+            provider: 'deepseek-fallback',
+            hasToolCalls: true
+          }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+        }
+
+        await usageTracker.success({ provider: 'deepseek-fallback' });
+        return new Response(JSON.stringify({
+          success: true,
+          response: deepseekResult.content,
+          executive: 'gemini-chat',
+          executiveTitle: 'Chief Analytics Officer (CAO)',
+          provider: 'deepseek-fallback'
+        }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+
+      const kimiResult = await callKimiFallback([{ role: 'system', content: contextualPrompt }, ...messages], ELIZA_TOOLS);
+      if (kimiResult) {
+        await usageTracker.success({ provider: 'kimi-fallback' });
+        return new Response(JSON.stringify({
+          success: true,
+          response: kimiResult.content,
+          executive: 'gemini-chat',
+          executiveTitle: 'Chief Analytics Officer (CAO)',
+          provider: 'kimi-fallback'
+        }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+
+      const emergency = await emergencyStaticFallback(messages[messages.length - 1]?.content || '', supabase, 'CAO', SUPABASE_URL, SERVICE_ROLE_KEY);
+      await usageTracker.success({ provider: 'emergency-static' });
+      return new Response(JSON.stringify({
+        success: true,
+        response: emergency.content,
+        executive: 'gemini-chat',
+        executiveTitle: 'Chief Analytics Officer (CAO)',
+        provider: 'emergency-static'
+      }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+
+    console.log('🚀 Calling Google Gemini...');
+    
+    let toolIterations = 0;
+    const forceTools = needsDataRetrieval(messages);
+
+    // Convert messages to Gemini format
+    const userMessages = messages.filter((m: any) => m.role !== 'system');
+    
+    // Build parts for the request
+    const parts: any[] = [];
+    
+    // Add user message
+    const lastUserMessage = userMessages[userMessages.length - 1]?.content || 'Hello';
+    parts.push({ text: lastUserMessage });
+    
+    // Add images if present
+    if (images && images.length > 0) {
+      for (const imageBase64 of images) {
+        const matches = imageBase64.match(/^data:([^;]+);base64,(.+)$/);
+        if (matches) {
+          parts.push({ inline_data: { mime_type: matches[1], data: matches[2] } });
+        }
+      }
+    }
+
+    // Convert tools to Gemini format
+    const geminiTools = [{
+      functionDeclarations: convertToolsToGeminiFormat(ELIZA_TOOLS)
+    }];
+
+    while (toolIterations < MAX_TOOL_ITERATIONS) {
+      try {
+        const response = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [{ parts }],
+              systemInstruction: { parts: [{ text: contextualPrompt }] },
+              tools: geminiTools,
+              toolConfig: forceTools && toolIterations === 0 ? { functionCallingConfig: { mode: 'ANY' } } : undefined,
+              generationConfig: {
+                temperature: 0.7,
+                maxOutputTokens: 8000
+              }
+            })
+          }
+        );
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('Gemini API error:', response.status, errorText);
+
+          // Fallback to DeepSeek then Kimi
+          const aiMessages = [{ role: 'system', content: contextualPrompt }, ...messages];
+          const deepseekResult = await callDeepSeekFallback(aiMessages, ELIZA_TOOLS);
+          if (deepseekResult) {
+            await usageTracker.success({ provider: 'deepseek-fallback', fallback: 'gemini-failed' });
+            return new Response(JSON.stringify({
+              success: true,
+              response: deepseekResult.content,
+              executive: 'gemini-chat',
+              executiveTitle: 'Chief Analytics Officer (CAO)',
+              provider: 'deepseek-fallback'
+            }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+          }
+
+          const kimiResult = await callKimiFallback(aiMessages, ELIZA_TOOLS);
+          if (kimiResult) {
+            await usageTracker.success({ provider: 'kimi-fallback', fallback: 'gemini-deepseek-failed' });
+            return new Response(JSON.stringify({
+              success: true,
+              response: kimiResult.content,
+              executive: 'gemini-chat',
+              executiveTitle: 'Chief Analytics Officer (CAO)',
+              provider: 'kimi-fallback'
+            }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+          }
+
+          const emergency = await emergencyStaticFallback(messages[messages.length - 1]?.content || '', supabase, 'CAO', SUPABASE_URL, SERVICE_ROLE_KEY);
+          await usageTracker.success({ provider: 'emergency-static', fallback: 'all-failed' });
+          return new Response(JSON.stringify({
+            success: true,
+            response: emergency.content,
+            executive: 'gemini-chat',
+            executiveTitle: 'Chief Analytics Officer (CAO)',
+            provider: 'emergency-static'
+          }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+        }
+
+        const data = await response.json();
+        const responseParts = data.candidates?.[0]?.content?.parts || [];
+
+        // Check for function calls
+        const functionCalls = responseParts.filter((p: any) => p.functionCall);
+        
+        if (functionCalls.length > 0) {
+          console.log(`🔧 Executing ${functionCalls.length} tool(s) from Gemini`);
+          
+          const toolResults = [];
+          for (const fc of functionCalls) {
+            const toolCall = {
+              id: `gemini_${Date.now()}_${Math.random().toString(36).substring(7)}`,
+              type: 'function',
+              function: {
+                name: fc.functionCall.name,
+                arguments: JSON.stringify(fc.functionCall.args || {})
+              }
+            };
+            
+            try {
+              const result = await executeToolCall(supabase, toolCall, 'CAO', SUPABASE_URL, SERVICE_ROLE_KEY);
+              toolResults.push({ tool: fc.functionCall.name, result });
+              
+              // Add function response to parts for next iteration
+              parts.push({
+                functionResponse: {
+                  name: fc.functionCall.name,
+                  response: { result: JSON.stringify(result) }
+                }
+              });
+            } catch (toolError) {
+              console.error(`Tool execution error for ${fc.functionCall.name}:`, toolError);
+              parts.push({
+                functionResponse: {
+                  name: fc.functionCall.name,
+                  response: { error: toolError.message }
+                }
+              });
+            }
+          }
+          
+          toolIterations++;
+          continue;
+        }
+
+        // Extract text response
+        const textContent = responseParts.find((p: any) => p.text)?.text || '';
+
+        await usageTracker.success({ 
+          provider: 'gemini', 
+          model: 'gemini-2.0-flash',
+          tool_calls: toolIterations > 0 ? toolIterations : undefined
+        });
+
+        return new Response(JSON.stringify({
+          success: true,
+          response: textContent,
+          executive: 'gemini-chat',
+          executiveTitle: 'Chief Analytics Officer (CAO)',
+          provider: 'gemini',
+          model: 'gemini-2.0-flash',
+          hasToolCalls: toolIterations > 0,
+          toolIterations
+        }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+
+      } catch (error) {
+        console.error('Gemini API call error:', error);
+
+        const aiMessages = [{ role: 'system', content: contextualPrompt }, ...messages];
+        const deepseekResult = await callDeepSeekFallback(aiMessages, ELIZA_TOOLS);
+        if (deepseekResult) {
+          await usageTracker.success({ provider: 'deepseek-fallback', fallback: 'gemini-exception' });
+          return new Response(JSON.stringify({
+            success: true,
+            response: deepseekResult.content,
+            executive: 'gemini-chat',
+            executiveTitle: 'Chief Analytics Officer (CAO)',
+            provider: 'deepseek-fallback'
+          }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+        }
+
+        break;
+      }
+    }
+
+    const emergency = await emergencyStaticFallback(messages[messages.length - 1]?.content || '', supabase, 'CAO', SUPABASE_URL, SERVICE_ROLE_KEY);
+    await usageTracker.success({ provider: 'emergency-static', fallback: 'max-iterations' });
+    return new Response(JSON.stringify({
+      success: true,
+      response: emergency.content,
+      executive: 'gemini-chat',
+      executiveTitle: 'Chief Analytics Officer (CAO)',
+      provider: 'emergency-static'
+    }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+
+  } catch (error) {
+    console.error('[gemini-chat] Error:', error);
+    await usageTracker.failure(error.message, 500);
+    return new Response(JSON.stringify({
+      success: false,
+      error: 'Internal server error',
+      details: error.message,
+      executive: 'gemini-chat',
+      timestamp: new Date().toISOString()
+    }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 });
+  }
+});

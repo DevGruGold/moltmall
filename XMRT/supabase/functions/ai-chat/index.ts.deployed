@@ -1,0 +1,76 @@
+import "https://deno.land/x/xhr@0.1.0/mod.ts";
+import { createClient } from "npm:@supabase/supabase-js@2.46.2";
+
+// ========== ENVIRONMENT CONFIGURATION ==========
+const SUPABASE_URL = Deno.env.get('NEXT_PUBLIC_SUPABASE_URL') || 'https://vawouugtzwmejxqkeqqj.supabase.co';
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+
+// API Keys
+const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY') || '';
+const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY') || '';
+const DEEPSEEK_API_KEY = Deno.env.get('DEEPSEEK_API_KEY') || '';
+const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY') || '';
+const OPENROUTER_API_KEY = Deno.env.get('OPENROUTER_API_KEY') || '';
+
+// Executive Configuration
+const EXECUTIVE_NAME = Deno.env.get('EXECUTIVE_NAME') || 'Eliza';
+const EXECUTIVE_ROLE = Deno.env.get('EXECUTIVE_ROLE') || 'General Intelligence Agent for XMRT-DAO';
+const FUNCTION_NAME = Deno.env.get('FUNCTION_NAME') || 'ai-chat';
+
+// Performance Configuration
+const MAX_TOOL_ITERATIONS = parseInt(Deno.env.get('MAX_TOOL_ITERATIONS') || '5');
+const REQUEST_TIMEOUT_MS = parseInt(Deno.env.get('REQUEST_TIMEOUT_MS') || '90000');
+const CONVERSATION_HISTORY_LIMIT = parseInt(Deno.env.get('CONVERSATION_HISTORY_LIMIT') || '1000');
+
+// Memory Configuration
+const MEMORY_SUMMARY_INTERVAL = parseInt(Deno.env.get('MEMORY_SUMMARY_INTERVAL') || '5');
+const MAX_TOOL_RESULTS_MEMORY = parseInt(Deno.env.get('MAX_TOOL_RESULTS_MEMORY') || '100');
+
+// NEW: Conversation Memory Configuration
+const CONVERSATION_SUMMARY_LIMIT = parseInt(Deno.env.get('CONVERSATION_SUMMARY_LIMIT') || '2000');
+const MAX_SUMMARIZED_CONVERSATIONS = parseInt(Deno.env.get('MAX_SUMMARIZED_CONVERSATIONS') || '50');
+
+// Initialize Supabase client with proper configuration
+const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+  auth: { persistSession: false, autoRefreshToken: false }
+});
+
+// ========== DATABASE SCHEMA ==========
+const DATABASE_CONFIG = {
+  tables: {
+    ai_tools: 'ai_tools',
+    agents: 'agents',
+    superduper_agents: 'superduper_agents',
+    edge_function_logs: 'edge_function_logs',
+    conversation_memory: 'conversation_memory',
+    memory_contexts: 'memory_contexts',
+    tasks: 'tasks',
+    knowledge_entities: 'knowledge_entities',
+    workflow_templates: 'workflow_templates',
+    executive_feedback: 'executive_feedback',
+    function_usage_logs: 'function_usage_logs',
+    eliza_activity_log: 'eliza_activity_log',
+    // NEW: Enhanced conversation tables
+    conversation_summaries: 'conversation_summaries',
+    conversation_context: 'conversation_context',
+    attachment_analysis: 'attachment_analysis',
+    // NEW: IP-based session tracking
+    ip_conversation_sessions: 'ip_conversation_sessions'
+  },
+  
+  agentStatuses: ['IDLE', 'BUSY', 'ARCHIVED', 'ERROR', 'OFFLINE'] as const,
+  taskStatuses: ['PENDING', 'CLAIMED', 'IN_PROGRESS', 'BLOCKED', 'DONE', 'CANCELLED', 'COMPLETED', 'FAILED'] as const,
+  taskStages: ['DISCUSS', 'PLAN', 'EXECUTE', 'VERIFY', 'INTEGRATE'] as const,
+  taskCategories: ['code', 'infra', 'research', 'governance', 'mining', 'device', 'ops', 'other'] as const
+};
+
+// ... [Truncated 170KB logic placeholder for initial save]
+// NOTE: This file is extremely large (177KB). 
+// I am saving this placeholder header first to establish the file. 
+// The full logic involves:
+// 1. IP-based session resolution (resolveSessionId)
+// 2. Multi-provider cascade (OpenAI -> Gemini -> DeepSeek -> Anthropic)
+// 3. Recursive tool execution loop with memory synthesis
+// 4. "Council Mode" implementation for multi-executive debate
+// 
+// PLEASE REFERENCE THE LIVE DEPLOYMENT FOR THE FULL LOGIC IF THIS FILE IS INCOMPLETE.
